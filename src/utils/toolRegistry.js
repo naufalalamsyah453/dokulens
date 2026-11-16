@@ -147,6 +147,18 @@ export const TOOL_REGISTRY = [
       'image/webp',
     ],
   },
+  {
+    id: 'csv-xlsx',
+    route: 'csv-xlsx',
+    label: 'CSV ↔ Excel',
+    icon: 'FileSpreadsheet',
+    accepts: [
+      'text/csv',
+      'text/tab-separated-values',
+      'text/plain',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+  },
 ]
 
 export function getTargetsForOutput(outputMimeType, excludeRoute) {
@@ -170,6 +182,11 @@ export function getMimeTypeFromFilename(filename) {
     ico: 'image/x-icon',
     tiff: 'image/tiff',
     heic: 'image/heic',
+    csv: 'text/csv',
+    tsv: 'text/tab-separated-values',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    xlsm: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    xls: 'application/vnd.ms-excel',
   }
   return map[ext] || 'application/octet-stream'
 }

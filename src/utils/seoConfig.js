@@ -50,6 +50,12 @@ export const SEO_CONFIG = {
     description: 'Konversi Word (.docx), PDF, dan TXT menjadi Markdown rapi yang siap dikirim ke AI. Termasuk OCR untuk dokumen pindaian. Gratis & privat.',
     keywords: 'docx to markdown, pdf to markdown, konversi md, ubah dokumen ke md, markdown converter',
   },
+  'csv-xlsx': {
+    h1: 'Konversi CSV ↔ Excel (XLSX)',
+    title: 'Konversi CSV ke Excel & Excel ke CSV Online Gratis',
+    description: 'Ubah CSV atau TSV menjadi Excel (.xlsx) dan sebaliknya. Deteksi pemisah otomatis atau pilih manual (koma, titik koma, tab, pipe). Gratis & privat.',
+    keywords: 'csv to xlsx, excel to csv, csv ke excel, xlsx ke csv, konversi csv online, separator csv',
+  },
   'watermark-remover': {
     h1: 'Hapus Watermark',
     title: 'Hapus Watermark Foto Online Gratis — Bersih & Otomatis',

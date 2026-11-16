@@ -61,6 +61,14 @@ export default defineConfig({
           if (id.includes('node_modules/jszip')) return 'jszip'
           if (id.includes('node_modules/docx')) return 'docx'
           if (id.includes('node_modules/mammoth')) return 'mammoth'
+          if (
+            id.includes('node_modules/read-excel-file') ||
+            id.includes('node_modules/write-excel-file') ||
+            id.includes('node_modules/fflate') ||
+            id.includes('node_modules/saxen') ||
+            id.includes('node_modules/unzipper-esm') ||
+            id.includes('node_modules/worker-f')
+          ) return 'xlsx'
         },
       },
     },

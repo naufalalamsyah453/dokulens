@@ -46,6 +46,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://naufalalamsyah453.github.io/dokulens/csv-xlsx/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://naufalalamsyah453.github.io/dokulens/watermark-remover/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
