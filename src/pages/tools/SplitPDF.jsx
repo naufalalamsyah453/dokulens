@@ -148,14 +148,16 @@ export default function SplitPDF() {
       {results.map((r) => (
         <div key={r.name} className="rounded-lg border border-(--color-success-light) bg-(--color-success-light) p-4">
           <p className="text-sm font-semibold text-(--color-success)">✓ Selesai</p>
-          <p className="mt-0.5 text-sm text-(--color-text-2)">{r.name} — {fmtBytes(r.blob.size)}</p>
+          <p className="mt-0.5 text-sm text-(--color-text-2)">{fmtBytes(r.blob.size)}</p>
+          <div className="mt-3">
           <DownloadButton
             blob={r.blob}
             fileName={r.name}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded bg-(--color-success) px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity no-underline"
+            className="flex w-full items-center justify-center gap-2 rounded bg-(--color-success) px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity no-underline"
           >
             <Download size={16} />Download
           </DownloadButton>
+          </div>
         </div>
       ))}
     </ToolShell>

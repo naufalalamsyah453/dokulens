@@ -1295,7 +1295,7 @@ export default function AddPageNumber() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-(--color-success)">✓ Selesai diproses</p>
-                  <p className="text-xs text-(--color-text-3)">{base}_numbered.{outExt} — {fmtBytes(resultBlob.size)}</p>
+                  <p className="text-xs text-(--color-text-3)">{fmtBytes(resultBlob.size)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <DownloadButton
