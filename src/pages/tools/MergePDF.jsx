@@ -24,6 +24,7 @@ import { pdfjsLib, renderPageToDataUrl } from '../../utils/pdfRender'
 import { readAsArrayBuffer, fmtBytes } from '../../utils/helpers'
 import { useIncomingFile } from '../../hooks/useIncomingFile'
 import { BTN_SEG_ACTIVE, BTN_SEG_INACTIVE } from '../../utils/activeButtonStyles'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 
 /* ─── Helper: Convert image file to PNG Uint8Array bytes ─── */
 async function convertImageToPngBytes(file) {
@@ -473,6 +474,7 @@ export default function MergePDF() {
   const [resultPages, setResultPages] = useState([])
   const [resultCurrentPage, setResultCurrentPage] = useState(1)
   const [renderingResult, setRenderingResult] = useState(false)
+  useUnloadGuard(pages.some((p) => p.rotation > 0 || p.enabled === false))
   const [error, setError] = useState('')
 
   const fileInputRef = useRef(null)

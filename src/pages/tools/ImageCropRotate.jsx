@@ -10,6 +10,7 @@ import FilePreview from '../../components/FilePreview'
 import { fmtBytes, stripExt } from '../../utils/helpers'
 import { useIncomingFile } from '../../hooks/useIncomingFile'
 import { BTN_CARD_ACTIVE, BTN_CARD_INACTIVE, BTN_TOGGLE_ACTIVE, BTN_TOGGLE_INACTIVE } from '../../utils/activeButtonStyles'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 
 const ASPECT_RATIOS = [
   { id: 'free', label: 'Bebas', ratio: null },
@@ -47,6 +48,11 @@ export default function ImageCropRotate() {
   const dragStartRef = useRef({ x: 0, y: 0, box: { ...cropBox } })
   const [canvasTick, setCanvasTick] = useState(0)
 
+  useUnloadGuard(
+    !!imageSrc &&
+      (rotation !== 0 || fineAngle !== 0 || flipH || flipV ||
+        cropBox.x !== 10 || cropBox.y !== 10 || cropBox.w !== 80 || cropBox.h !== 80)
+  )
   const handleFile = ([f]) => {
     if (!f) return
     setFile(f)

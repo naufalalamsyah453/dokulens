@@ -9,6 +9,7 @@ import SendToDropdown from '../../components/SendToDropdown'
 import DownloadButton from '../../components/DownloadButton'
 import { stripExt } from '../../utils/helpers'
 import { useIncomingFile } from '../../hooks/useIncomingFile'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 
 const MAX_DIM = 512
 
@@ -30,6 +31,7 @@ export default function ObjectRemover() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasMask, setHasMask] = useState(false)
 
+  useUnloadGuard(hasMask)
   const imgRef = useRef(null)
   const modalImgRef = useRef(null)
   const modalCanvasRef = useRef(null)

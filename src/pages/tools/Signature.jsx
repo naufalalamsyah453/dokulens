@@ -9,6 +9,7 @@ import { readAsArrayBuffer, stripExt, downloadBlob } from '../../utils/helpers'
 import { useIncomingFile } from '../../hooks/useIncomingFile'
 import { PDFDocument } from 'pdf-lib'
 import { pdfjsLib, renderPageToDataUrl } from '../../utils/pdfRender'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 
 const PREVIEW_MAX_H = 500
 
@@ -181,6 +182,7 @@ function SignaturePlacer({ signatureDataUrl }) {
   const [sigNatural, setSigNatural] = useState(null)
   const [sigReady, setSigReady] = useState(false)
 
+  useUnloadGuard(sigReady && (sigPos.x !== 50 || sigPos.y !== 86 || sigW !== 150 || sigH !== 60))
   const pdfDocRef = useRef(null)
   const previewBoxRef = useRef(null)
   const dragRef = useRef({ dragging: false })

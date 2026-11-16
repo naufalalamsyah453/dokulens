@@ -13,6 +13,7 @@ import { pdfjsLib, renderPageToDataUrl, extractPageTextItems } from '../../utils
 import { readAsArrayBuffer, fmtBytes, stripExt } from '../../utils/helpers'
 import { useIncomingFile } from '../../hooks/useIncomingFile'
 import { BTN_CARD_ACTIVE, BTN_CARD_INACTIVE, BTN_TOGGLE_ACTIVE, BTN_TOGGLE_INACTIVE } from '../../utils/activeButtonStyles'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 
 const FONT_OPTIONS = [
   { id: 'Helvetica', label: 'Helvetica / Arial (Modern Sans-Serif)', css: 'font-sans' },
@@ -35,6 +36,7 @@ export default function EditPDF() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
+  useUnloadGuard(textBlocks.some((b) => b.isEdited))
   const containerRef = useRef(null)
   const pdfDocRef = useRef(null)
 

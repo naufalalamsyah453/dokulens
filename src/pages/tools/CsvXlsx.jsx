@@ -340,7 +340,7 @@ export default function CsvXlsx() {
     }
   }
 
-  useUnloadGuard(results.length > 0)
+  useUnloadGuard(results.length > 0 || items.some((i) => i.edits && Object.keys(i.edits).length > 0))
   const totalSize = results.reduce((sum, r) => sum + r.blob.size, 0)
   const hasFiles = items.length > 0
 

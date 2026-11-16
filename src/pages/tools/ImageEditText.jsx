@@ -8,6 +8,7 @@ import ProgressBar from '../../components/ProgressBar'
 import { createWorker } from 'tesseract.js'
 import { inpaintWatermark } from '../../utils/watermarkRemover'
 import { BTN_CARD_ACTIVE, BTN_CARD_INACTIVE, BTN_TOGGLE_ACTIVE, BTN_TOGGLE_INACTIVE } from '../../utils/activeButtonStyles'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 
 function dataUrlToBlob(d) {
   const [head, body] = d.split(',')
@@ -49,6 +50,7 @@ export default function ImageEditText() {
   const [editHistory, setEditHistory] = useState([])
   const [hoveredWord, setHoveredWord] = useState(null)
 
+  useUnloadGuard(editHistory.length > 0)
   const previewRef = useRef(null)
   const canvasRef = useRef(null)
   const imgRef = useRef(null)
