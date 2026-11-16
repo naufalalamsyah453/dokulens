@@ -11,6 +11,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Pencil,
+  RotateCcw,
 } from 'lucide-react'
 import JSZip from 'jszip'
 import ToolShell from '../../components/ToolShell'
@@ -48,10 +50,41 @@ function previewCell(value) {
   return text.length > 60 ? `${text.slice(0, 60)}…` : text
 }
 
-function itemRows(item, mode, separator) {
+function baseRows(item, mode, separator) {
   if (mode === 'csv2xlsx') return item.csvText ? parseDelimited(item.csvText, separator) : []
   const sheet = item.sheets.find((s) => s.name === item.selectedSheet)
   return sheet ? sheet.rows : []
+}
+
+// Edit disimpan per sel: "<sheet>|<baris>|<kolom>" -> nilai baru.
+function editPrefix(item, mode) {
+  return mode === 'csv2xlsx' ? '|' : `${item.selectedSheet}|`
+}
+
+function applyEdits(rows, item, mode) {
+  const edits = item?.edits
+  if (!edits) return rows
+  const prefix = editPrefix(item, mode)
+  const keys = Object.keys(edits).filter((k) => k.startsWith(prefix))
+  if (!keys.length) return rows
+  const out = rows.map((row) => row.slice())
+  for (const key of keys) {
+    const [r, c] = key.slice(prefix.length).split('|').map(Number)
+    if (!out[r]) continue
+    while (out[r].length <= c) out[r].push('')
+    out[r][c] = edits[key]
+  }
+  return out
+}
+
+function itemRows(item, mode, separator) {
+  return applyEdits(baseRows(item, mode, separator), item, mode)
+}
+
+function countEdits(item, mode) {
+  if (!item?.edits) return 0
+  const prefix = editPrefix(item, mode)
+  return Object.keys(item.edits).filter((k) => k.startsWith(prefix)).length
 }
 
 function uniqueName(name, used) {
@@ -67,6 +100,8 @@ export default function CsvXlsx() {
   const [mode, setMode] = useState('csv2xlsx')
   const [items, setItems] = useState([])
   const [activeId, setActiveId] = useState(null)
+  const [editMode, setEditMode] = useState(false)
+  const [rowPage, setRowPage] = useState(0)
   const [sepMode, setSepMode] = useState('auto')
   const [customSep, setCustomSep] = useState('')
   const [xlsxSheetName, setXlsxSheetName] = useState('')
@@ -86,13 +121,46 @@ export default function CsvXlsx() {
   const goPreview = (delta) => {
     if (!items.length) return
     const next = (activeIndex + delta + items.length) % items.length
-    setActiveId(items[next].id)
+    selectItem(items[next].id)
   }
-  const rows = useMemo(
-    () => (active ? itemRows(active, mode, separatorFor(active)) : []),
+  const selectItem = (id) => {
+    setActiveId(id)
+    setRowPage(0)
+  }
+  const activeSep = active ? separatorFor(active) : ','
+  const parsedRows = useMemo(
+    () => (active ? baseRows(active, mode, activeSep) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [active, mode, sepMode, customSep]
+    [active?.id, active?.csvText, active?.sheets, active?.selectedSheet, mode, activeSep]
   )
+  const rows = useMemo(
+    () => (active ? applyEdits(parsedRows, active, mode) : []),
+    [parsedRows, active, mode]
+  )
+  const editCount = countEdits(active, mode)
+
+  const setCell = (rowIndex, colIndex, value) => {
+    if (!active) return
+    const key = `${editPrefix(active, mode)}${rowIndex}|${colIndex}`
+    setItems((prev) =>
+      prev.map((i) => (i.id === active.id ? { ...i, edits: { ...(i.edits || {}), [key]: value } } : i))
+    )
+    clearResults()
+  }
+
+  const resetEdits = () => {
+    if (!active) return
+    const prefix = editPrefix(active, mode)
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.id !== active.id) return i
+        const edits = {}
+        for (const [k, v] of Object.entries(i.edits || {})) if (!k.startsWith(prefix)) edits[k] = v
+        return { ...i, edits }
+      })
+    )
+    clearResults()
+  }
 
   const columnCount = useMemo(
     () => rows.reduce((max, row) => Math.max(max, row.length), 0),
@@ -101,8 +169,11 @@ export default function CsvXlsx() {
 
   const clearResults = () => setResults([])
 
-  const updateSeparator = (value) => { setSepMode(value); clearResults() }
-  const updateCustomSeparator = (value) => { setCustomSep(value); clearResults() }
+  const dropCsvEdits = () => {
+    if (mode === 'csv2xlsx') setItems((prev) => prev.map((i) => (i.edits ? { ...i, edits: {} } : i)))
+  }
+  const updateSeparator = (value) => { setSepMode(value); dropCsvEdits(); clearResults() }
+  const updateCustomSeparator = (value) => { setCustomSep(value); dropCsvEdits(); clearResults() }
   const updateAutoNumber = (value) => { setAutoNumber(value); clearResults() }
   const updateHeaderRow = (value) => { setHeaderRow(value); clearResults() }
   const updateSheetName = (value) => { setXlsxSheetName(value); clearResults() }
@@ -271,7 +342,10 @@ export default function CsvXlsx() {
   const totalSize = results.reduce((sum, r) => sum + r.blob.size, 0)
   const hasFiles = items.length > 0
 
-  const previewRows = rows.slice(0, PREVIEW_ROWS)
+  const pageCount = Math.max(1, Math.ceil(rows.length / PREVIEW_ROWS))
+  const page = Math.min(rowPage, pageCount - 1)
+  const pageStart = page * PREVIEW_ROWS
+  const previewRows = rows.slice(pageStart, pageStart + PREVIEW_ROWS)
   const previewCols = Math.min(columnCount, PREVIEW_COLS)
 
   return (
@@ -342,7 +416,7 @@ export default function CsvXlsx() {
               >
                 <button
                   type="button"
-                  onClick={() => setActiveId(item.id)}
+                  onClick={() => selectItem(item.id)}
                   className="min-w-0 flex-1 truncate text-left font-medium text-(--color-text) cursor-pointer"
                   title="Tampilkan pratinjau"
                 >
@@ -510,6 +584,18 @@ export default function CsvXlsx() {
               <span className="text-[11px] font-medium text-(--color-text-3)">
                 {rows.length.toLocaleString('id-ID')} baris · {columnCount.toLocaleString('id-ID')} kolom
               </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={editMode}
+                onClick={() => setEditMode((v) => !v)}
+                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
+                  editMode ? BTN_TOGGLE_ACTIVE : BTN_TOGGLE_INACTIVE
+                }`}
+                title="Aktifkan edit langsung di tabel"
+              >
+                <Pencil size={12} /> Edit: {editMode ? 'ON' : 'OFF'}
+              </button>
               {items.length > 1 && (
                 <div className="flex items-center gap-1">
                   <button
@@ -542,38 +628,90 @@ export default function CsvXlsx() {
           <div className="max-h-80 overflow-auto">
             <table className="w-full border-collapse text-left text-xs">
               <tbody>
-                {previewRows.map((row, rowIndex) => (
-                  <tr
-                    key={rowIndex}
-                    className={rowIndex === 0 && headerRow ? 'bg-(--color-surface-2)' : ''}
-                  >
-                    <td className="border-b border-(--color-border) px-2 py-1.5 text-right font-mono text-[10px] text-(--color-text-3) align-top">
-                      {rowIndex + 1}
-                    </td>
-                    {Array.from({ length: previewCols }, (_, colIndex) => (
-                      <td
-                        key={colIndex}
-                        className={`max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap border-b border-(--color-border) px-2 py-1.5 align-top ${
-                          rowIndex === 0 && headerRow
-                            ? 'font-semibold text-(--color-text)'
-                            : 'text-(--color-text-2)'
-                        }`}
-                      >
-                        {previewCell(row[colIndex])}
+                {previewRows.map((row, i) => {
+                  const rowIndex = pageStart + i
+                  const isHeader = rowIndex === 0 && headerRow
+                  return (
+                    <tr key={rowIndex} className={isHeader ? 'bg-(--color-surface-2)' : ''}>
+                      <td className="border-b border-(--color-border) px-2 py-1.5 text-right font-mono text-[10px] text-(--color-text-3) align-top">
+                        {rowIndex + 1}
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {Array.from({ length: previewCols }, (_, colIndex) =>
+                        editMode ? (
+                          <td key={colIndex} className="border-b border-(--color-border) p-0 align-top">
+                            <input
+                              value={row[colIndex] ?? ''}
+                              onChange={(e) => setCell(rowIndex, colIndex, e.target.value)}
+                              spellCheck={false}
+                              className={`block w-40 min-w-full bg-transparent px-2 py-1.5 text-xs outline-none focus:bg-(--color-surface-2) focus:ring-1 focus:ring-inset focus:ring-(--color-brand) ${
+                                isHeader ? 'font-semibold text-(--color-text)' : 'text-(--color-text-2)'
+                              }`}
+                            />
+                          </td>
+                        ) : (
+                          <td
+                            key={colIndex}
+                            className={`max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap border-b border-(--color-border) px-2 py-1.5 align-top ${
+                              isHeader ? 'font-semibold text-(--color-text)' : 'text-(--color-text-2)'
+                            }`}
+                          >
+                            {previewCell(row[colIndex])}
+                          </td>
+                        )
+                      )}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
           )}
-          {(rows.length > PREVIEW_ROWS || columnCount > PREVIEW_COLS) && (
-            <p className="border-t border-(--color-border) px-3 py-2 text-[11px] text-(--color-text-3)">
-              Menampilkan {Math.min(rows.length, PREVIEW_ROWS)} baris pertama
-              {columnCount > PREVIEW_COLS ? ` dan ${PREVIEW_COLS} kolom pertama` : ''}. Semua data tetap ikut
-              dikonversi.
-            </p>
+          {(pageCount > 1 || columnCount > PREVIEW_COLS || editCount > 0) && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) px-3 py-2 text-[11px] text-(--color-text-3)">
+              <span>
+                {pageCount > 1
+                  ? `Baris ${pageStart + 1}–${Math.min(pageStart + PREVIEW_ROWS, rows.length)} dari ${rows.length.toLocaleString('id-ID')}`
+                  : ''}
+                {columnCount > PREVIEW_COLS ? `${pageCount > 1 ? ' · ' : ''}${PREVIEW_COLS} kolom pertama ditampilkan` : ''}
+                {pageCount > 1 || columnCount > PREVIEW_COLS ? '. Semua data tetap ikut dikonversi.' : ''}
+              </span>
+              <span className="flex items-center gap-2">
+                {editCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetEdits}
+                    className="flex items-center gap-1 font-semibold text-(--color-danger) hover:underline cursor-pointer"
+                  >
+                    <RotateCcw size={11} /> Reset {editCount} perubahan
+                  </button>
+                )}
+                {pageCount > 1 && (
+                  <span className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={page === 0}
+                      onClick={() => setRowPage(page - 1)}
+                      className="rounded border border-(--color-border) p-1 text-(--color-text-2) hover:bg-(--color-surface-3) disabled:opacity-40 cursor-pointer"
+                      title="Halaman baris sebelumnya"
+                    >
+                      <ChevronLeft size={13} />
+                    </button>
+                    <span className="min-w-12 text-center font-semibold text-(--color-text-2)">
+                      {page + 1} / {pageCount}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={page >= pageCount - 1}
+                      onClick={() => setRowPage(page + 1)}
+                      className="rounded border border-(--color-border) p-1 text-(--color-text-2) hover:bg-(--color-surface-3) disabled:opacity-40 cursor-pointer"
+                      title="Halaman baris berikutnya"
+                    >
+                      <ChevronRight size={13} />
+                    </button>
+                  </span>
+                )}
+              </span>
+            </div>
           )}
         </div>
       )}
