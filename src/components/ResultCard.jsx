@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { X, MoreVertical, Send, Download } from 'lucide-react'
 import DownloadButton from './DownloadButton'
 import { getTargetsForOutput } from '../utils/toolRegistry'
+import { useUnloadGuard } from '../hooks/useUnloadGuard'
 
 export default function ResultCard({ fileName, blob, onReset, extraInfo, outputMimeType, sourceRoute }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const navigate = useNavigate()
+  useUnloadGuard(true)
 
   const targets = outputMimeType ? getTargetsForOutput(outputMimeType, sourceRoute) : []
 

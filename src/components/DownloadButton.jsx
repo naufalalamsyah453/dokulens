@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { downloadBlob } from '../utils/helpers'
+import { useUnloadGuard } from '../hooks/useUnloadGuard'
 
 export function splitExt(name) {
   const m = (name || '').match(/^(.*?)(\.[^.]+)?$/)
@@ -42,6 +43,7 @@ export default function DownloadButton({
 }) {
   const init = splitExt(fileName)
   const [nameBase, setNameBase] = useState(init.base)
+  useUnloadGuard(!!blob)
 
   // Sinkronkan bila nama dari induk berubah (mis. hasil baru).
   useEffect(() => { setNameBase(splitExt(fileName).base) }, [fileName])

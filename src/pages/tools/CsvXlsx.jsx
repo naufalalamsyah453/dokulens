@@ -19,6 +19,7 @@ import ToolShell from '../../components/ToolShell'
 import DropZone from '../../components/DropZone'
 import { RenameField, splitExt } from '../../components/DownloadButton'
 import { useIncomingFile } from '../../hooks/useIncomingFile'
+import { useUnloadGuard } from '../../hooks/useUnloadGuard'
 import { BTN_TOGGLE_ACTIVE, BTN_TOGGLE_INACTIVE } from '../../utils/activeButtonStyles'
 import { fmtBytes, downloadBlob } from '../../utils/helpers'
 import {
@@ -339,6 +340,7 @@ export default function CsvXlsx() {
     }
   }
 
+  useUnloadGuard(results.length > 0)
   const totalSize = results.reduce((sum, r) => sum + r.blob.size, 0)
   const hasFiles = items.length > 0
 
