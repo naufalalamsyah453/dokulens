@@ -9,6 +9,8 @@ import {
   Settings2,
   Table2,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import JSZip from 'jszip'
 import ToolShell from '../../components/ToolShell'
@@ -80,6 +82,12 @@ export default function CsvXlsx() {
     sepMode === 'auto' ? item.detectedSep : sepMode === 'custom' ? customSep || ',' : sepMode
 
   const active = items.find((i) => i.id === activeId) || items[0] || null
+  const activeIndex = active ? items.findIndex((i) => i.id === active.id) : -1
+  const goPreview = (delta) => {
+    if (!items.length) return
+    const next = (activeIndex + delta + items.length) % items.length
+    setActiveId(items[next].id)
+  }
   const rows = useMemo(
     () => (active ? itemRows(active, mode, separatorFor(active)) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -491,16 +499,46 @@ export default function CsvXlsx() {
         </div>
       )}
 
-      {hasFiles && rows.length > 0 && (
+      {hasFiles && (
         <div className="overflow-hidden rounded-lg border border-(--color-border) bg-(--color-surface)">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-(--color-border) bg-(--color-surface-2) px-3 py-2">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-(--color-text)">
-              <Table2 size={14} className="text-(--color-brand)" /> Pratinjau{active ? ` — ${active.file.name}` : ' data'}
+            <span className="flex min-w-0 items-center gap-1.5 text-xs font-bold text-(--color-text)">
+              <Table2 size={14} className="shrink-0 text-(--color-brand)" />
+              <span className="truncate" title={active?.file.name}>Pratinjau{active ? ` — ${active.file.name}` : ''}</span>
             </span>
-            <span className="text-[11px] font-medium text-(--color-text-3)">
-              {rows.length.toLocaleString('id-ID')} baris · {columnCount.toLocaleString('id-ID')} kolom
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-medium text-(--color-text-3)">
+                {rows.length.toLocaleString('id-ID')} baris · {columnCount.toLocaleString('id-ID')} kolom
+              </span>
+              {items.length > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => goPreview(-1)}
+                    className="rounded border border-(--color-border) p-1 text-(--color-text-2) hover:bg-(--color-surface-3) cursor-pointer"
+                    title="File sebelumnya"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="min-w-12 text-center text-[11px] font-semibold text-(--color-text-2)">
+                    {activeIndex + 1} / {items.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => goPreview(1)}
+                    className="rounded border border-(--color-border) p-1 text-(--color-text-2) hover:bg-(--color-surface-3) cursor-pointer"
+                    title="File berikutnya"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
+          {rows.length === 0 && (
+            <p className="px-3 py-4 text-xs text-(--color-text-3)">Tidak ada data untuk ditampilkan.</p>
+          )}
+          {rows.length > 0 && (
           <div className="max-h-80 overflow-auto">
             <table className="w-full border-collapse text-left text-xs">
               <tbody>
@@ -529,6 +567,7 @@ export default function CsvXlsx() {
               </tbody>
             </table>
           </div>
+          )}
           {(rows.length > PREVIEW_ROWS || columnCount > PREVIEW_COLS) && (
             <p className="border-t border-(--color-border) px-3 py-2 text-[11px] text-(--color-text-3)">
               Menampilkan {Math.min(rows.length, PREVIEW_ROWS)} baris pertama
